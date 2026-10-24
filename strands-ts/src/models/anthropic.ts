@@ -611,6 +611,7 @@ export class AnthropicModel extends Model<AnthropicModelConfig> {
       name: tool.name,
       description: tool.description,
       input_schema: tool.inputSchema as Anthropic.Tool.InputSchema,
+      ...(tool.eagerInputStreaming !== undefined && { eager_input_streaming: tool.eagerInputStreaming }),
     }))
     const serverTools = [
       ...(this._config.anthropicTools ?? []),

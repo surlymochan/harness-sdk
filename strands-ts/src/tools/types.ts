@@ -34,6 +34,15 @@ export interface ToolSpec {
   outputSchema?: JSONSchema
 
   /**
+   * Whether the provider should stream this tool's input eagerly, as it is generated, instead of
+   * buffering and validating the whole input first (Anthropic fine-grained tool streaming).
+   *
+   * Not all model providers support this field. Providers that don't support it filter it out
+   * before sending to their API.
+   */
+  eagerInputStreaming?: boolean
+
+  /**
    * Untrusted tool-behavior hints (e.g. MCP `readOnlyHint`, `destructiveHint`); never a security boundary.
    *
    * Not sent to model provider APIs. A missing key means unknown, not `false` — per MCP spec

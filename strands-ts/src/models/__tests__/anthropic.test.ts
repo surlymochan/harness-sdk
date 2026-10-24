@@ -733,6 +733,66 @@ describe('AnthropicModel', () => {
       expect(captured.request.tool_choice).toEqual({ type: 'auto' })
     })
 
+    it('forwards eagerInputStreaming to the tool definition', async () => {
+      const { captured, mockClient } = setupCapture()
+      const provider = new AnthropicModel({ client: mockClient })
+      const messages = [new Message({ role: 'user', content: [new TextBlock('Hi')] })]
+      const toolSpecs = [
+        {
+          name: 'calc',
+          description: 'calculate',
+          inputSchema: { type: 'object' as const, properties: {} },
+          eagerInputStreaming: true,
+        },
+        {
+          name: 'search',
+          description: 'search the web',
+          inputSchema: { type: 'object' as const, properties: {} },
+        },
+      ]
+
+      await collectIterator(provider.stream(messages, { toolSpecs, toolChoice: { auto: {} } }))
+
+      expect(captured.request.tools).toEqual([
+        {
+          name: 'calc',
+          description: 'calculate',
+          input_schema: { type: 'object', properties: {} },
+          eager_input_streaming: true,
+        },
+        {
+          name: 'search',
+          description: 'search the web',
+          input_schema: { type: 'object', properties: {} },
+        },
+      ])
+    })
+
+    it('forwards eagerInputStreaming false so a request-wide beta cannot enable it for that tool', async () => {
+      const { captured, mockClient } = setupCapture()
+      const provider = new AnthropicModel({ client: mockClient })
+      const messages = [new Message({ role: 'user', content: [new TextBlock('Hi')] })]
+      const toolSpecs = [
+        {
+          name: 'calc',
+          description: 'calculate',
+          inputSchema: { type: 'object' as const, properties: {} },
+          eagerInputStreaming: false,
+        },
+      ]
+
+      await collectIterator(provider.stream(messages, { toolSpecs, toolChoice: { auto: {} } }))
+
+      expect(captured.request.tools).toEqual([
+        {
+          name: 'calc',
+          description: 'calculate',
+          input_schema: { type: 'object', properties: {} },
+          eager_input_streaming: false,
+        },
+      ])
+    })
+
     it('formats a signature-only reasoning block', async () => {
       const { captured, mockClient } = setupCapture()
       const provider = new AnthropicModel({ client: mockClient })
